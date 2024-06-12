@@ -52,6 +52,8 @@ if "question_index" not in st.session_state:
     st.session_state.question_index = 0
 if "answers" not in st.session_state:
     st.session_state.answers = []
+if "show_options" not in st.session_state:
+    st.session_state.show_options = False
 
 # Display or clear chat messages
 for message in st.session_state.messages:
@@ -62,6 +64,7 @@ def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
     st.session_state.question_index = 0
     st.session_state.answers = []
+    st.session_state.show_options = False
 st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
 
 # Function for generating LLaMA2 response
@@ -87,13 +90,13 @@ def generate_llama2_response(prompt_input):
 # Function to handle user responses and provide questions/options
 def handle_user_input(user_input):
     st.session_state.messages.append({"role": "user", "content": user_input})
-    if st.session_state.question_index < len(questions):
-        st.session_state.answers.append(user_input)
+    st.session_state.answers.append(user_input)
+    if st.session_state.question_index < len(questions) - 1:
         st.session_state.question_index += 1
-        if st.session_state.question_index < len(questions):
-            next_question = questions[st.session_state.question_index]
-            st.session_state.messages.append({"role": "assistant", "content": next_question})
+        next_question = questions[st.session_state.question_index]
+        st.session_state.messages.append({"role": "assistant", "content": next_question})
     else:
+        st.session_state.show_options = True
         st.session_state.messages.append({"role": "assistant", "content": "Thank you for the information. Here are some options for further assistance:"})
         for option in options:
             st.session_state.messages.append({"role": "assistant", "content": option})
@@ -102,19 +105,25 @@ def handle_user_input(user_input):
 if prompt := st.chat_input(disabled=not replicate_api):
     handle_user_input(prompt)
 
-# Generate a new response if last message is not from assistant and questions are completed
-if st.session_state.messages[-1]["role"] != "assistant" and st.session_state.question_index >= len(questions):
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            response = generate_llama2_response(prompt)
-            placeholder = st.empty()
-            full_response = ''
-            for item in response:
-                full_response += item
+# Display options and handle selection
+if st.session_state.show_options:
+    selected_option = st.selectbox("Select an option for further assistance:", options)
+    if st.button("Submit"):
+        st.session_state.messages.append({"role": "user", "content": selected_option})
+        response_context = "\n".join(st.session_state.answers)
+        response_prompt = f"You have the following information:\n{response_context}\nBased on this information, {selected_option.lower()}"
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                response = generate_llama2_response(response_prompt)
+                placeholder = st.empty()
+                full_response = ''
+                for item in response:
+                    full_response += item
+                    placeholder.markdown(full_response)
                 placeholder.markdown(full_response)
-            placeholder.markdown(full_response)
-    message = {"role": "assistant", "content": full_response}
-    st.session_state.messages.append(message)
+        message = {"role": "assistant", "content": full_response}
+        st.session_state.messages.append(message)
+        st.session_state.show_options = False
 
 # Initial prompt to ask the first question if it's the beginning of the conversation
 if st.session_state.question_index == 0 and not st.session_state.answers:
