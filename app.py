@@ -131,3 +131,12 @@ if st.session_state.show_options:
         st.session_state.show_options = False
 
 # Initial prompt to ask the first question if it
+
+# Initial prompt to ask the first question if it's the beginning of the conversation
+if st.session_state.question_index == 0 and not st.session_state.answers:
+    st.session_state.messages.append({"role": "assistant", "content": questions[0]})
+
+# Run the Streamlit app
+if __name__ == "__main__":
+    st.write("Welcome to the Llama 2 Chatbot!")
+
