@@ -110,7 +110,7 @@ if st.session_state.show_options:
     selected_option = st.selectbox("Select an option for further assistance:", options)
     if st.button("Submit"):
         st.session_state.messages.append({"role": "user", "content": selected_option})
-        response_context = "\n".join(st.session_state.answers)
+        response_context = "\n".join([f"{questions[i]} {st.session_state.answers[i]}" for i in range(len(questions))])
         response_prompt = f"You have the following information:\n{response_context}\nBased on this information, {selected_option.lower()}"
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
