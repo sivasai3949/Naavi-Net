@@ -32,6 +32,7 @@ with st.sidebar:
 
 # Initial questions
 questions = [
+    "How may I assist you today?",
     "Please provide your general information like name, city, state, country.",
     "Please provide your academic performance (grade, board, present percentage).",
     "What is your goal, financial position, and which places are you interested in?"
@@ -47,7 +48,7 @@ options = [
 
 # Store LLM generated responses and initial questions status
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state.messages = [{"role": "assistant", "content": questions[0]}]
 if "question_index" not in st.session_state:
     st.session_state.question_index = 0
 if "answers" not in st.session_state:
@@ -61,7 +62,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 def clear_chat_history():
-    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state.messages = [{"role": "assistant", "content": questions[0]}]
     st.session_state.question_index = 0
     st.session_state.answers = []
     st.session_state.show_options = False
