@@ -102,6 +102,23 @@ def handle_user_input(user_input):
         for option in options:
             st.session_state.messages.append({"role": "assistant", "content": option})
 
+# Function to handle user selection of options and generate appropriate prompts
+def handle_option_selection(option_selected):
+    st.session_state.messages.append({"role": "user", "content": option_selected})
+    # Construct the prompt based on the selected option and the user's answers
+    response_prompt = f"You have the following information:\n"
+    for i in range(len(questions)):
+        response_prompt += f"{questions[i]} {st.session_state.answers[i]}\n"
+    response_prompt += f"Based on this information, {option_selected.lower()} Assistant: "
+    
+    # Generate response using LLaMA2
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = generate_llama2_response(response_prompt)
+            for item in response:
+                st.write(item)
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
 # User-provided prompt
 if prompt := st.chat_input(disabled=not replicate_api):
     handle_user_input(prompt)
@@ -110,22 +127,7 @@ if prompt := st.chat_input(disabled=not replicate_api):
 if st.session_state.show_options:
     selected_option = st.selectbox("Select an option for further assistance:", options)
     if st.button("Submit"):
-        st.session_state.messages.append({"role": "user", "content": selected_option})
-        response_context = "\n".join([f"{questions[i]} {st.session_state.answers[i]}" for i in range(len(questions))])
-        response_prompt = f"You have the following information:\n{response_context}\nBased on this information, {selected_option.lower()}"
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                response = generate_llama2_response(response_prompt)
-                placeholder = st.empty()
-                full_response = ''
-                for item in response:
-                    full_response += item
-                    placeholder.markdown(full_response)
-                placeholder.markdown(full_response)
-        message = {"role": "assistant", "content": full_response}
-        st.session_state.messages.append(message)
+        handle_option_selection(selected_option)
         st.session_state.show_options = False
 
-# Initial prompt to ask the first question if it's the beginning of the conversation
-if st.session_state.question_index == 0 and not st.session_state.answers:
-    st.session_state.messages.append({"role": "assistant", "content": questions[0]})
+# Initial prompt to ask the first question if it
