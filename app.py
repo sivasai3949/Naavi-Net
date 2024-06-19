@@ -76,25 +76,21 @@ def generate_llama2_response(prompt_input):
             string_dialogue += "User: " + dict_message["content"] + "\n\n"
         else:
             string_dialogue += "Assistant: " + dict_message["content"] + "\n\n"
-    
-    # Make the API call to Replicate
-    output = replicate.run(
-        llm, 
-        input={
-            "prompt": f"{string_dialogue} {prompt_input} Assistant: ",
-            "temperature": temperature,
-            "top_p": top_p,
-            "max_length": max_length,
-            "repetition_penalty": 1
-        }
-    )
-    # Assume output is a list of responses, extract the first one
-    if isinstance(output, list) and len(output) > 0:
-        response = output[0]
-    else:
-        response = "I'm sorry, I couldn't generate a response."
-    
-    return response
+    try:
+        output = replicate.run(
+            llm, 
+            input={
+                "prompt": f"{string_dialogue} {prompt_input} Assistant: ",
+                "temperature": temperature,
+                "top_p": top_p,
+                "max_length": max_length,
+                "repetition_penalty": 1
+            }
+        )
+        return output
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+        return "I'm sorry, I couldn't generate a response."
 
 # Function to handle user responses and provide questions/options
 def handle_user_input(user_input):
@@ -123,7 +119,11 @@ def handle_option_selection(option_selected):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = generate_llama2_response(response_prompt)
-            st.write(response)
+            if isinstance(response, list):
+                for item in response:
+                    st.write(item)
+            else:
+                st.write(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
 
 # User-provided prompt
