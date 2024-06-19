@@ -76,6 +76,8 @@ def generate_llama2_response(prompt_input):
             string_dialogue += "User: " + dict_message["content"] + "\n\n"
         else:
             string_dialogue += "Assistant: " + dict_message["content"] + "\n\n"
+    
+    # Make the API call to Replicate
     output = replicate.run(
         llm, 
         input={
@@ -86,7 +88,13 @@ def generate_llama2_response(prompt_input):
             "repetition_penalty": 1
         }
     )
-    return output
+    # Assume output is a list of responses, extract the first one
+    if isinstance(output, list) and len(output) > 0:
+        response = output[0]
+    else:
+        response = "I'm sorry, I couldn't generate a response."
+    
+    return response
 
 # Function to handle user responses and provide questions/options
 def handle_user_input(user_input):
@@ -115,8 +123,7 @@ def handle_option_selection(option_selected):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = generate_llama2_response(response_prompt)
-            for item in response:
-                st.write(item)
+            st.write(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
 
 # User-provided prompt
@@ -130,8 +137,6 @@ if st.session_state.show_options:
         handle_option_selection(selected_option)
         st.session_state.show_options = False
 
-# Initial prompt to ask the first question if it
-
 # Initial prompt to ask the first question if it's the beginning of the conversation
 if st.session_state.question_index == 0 and not st.session_state.answers:
     st.session_state.messages.append({"role": "assistant", "content": questions[0]})
@@ -139,4 +144,3 @@ if st.session_state.question_index == 0 and not st.session_state.answers:
 # Run the Streamlit app
 if __name__ == "__main__":
     st.write("Welcome to the Llama 2 Chatbot!")
-
